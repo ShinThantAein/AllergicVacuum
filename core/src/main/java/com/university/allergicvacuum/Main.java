@@ -1,40 +1,190 @@
 package com.university.allergicvacuum;
 
 import com.badlogic.gdx.ApplicationListener;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.Gdx;
 
-/** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Main game class.
+ *
+ * This is currently used to test:
+ * - Vacuum movement
+ * - Item rendering
+ * - Vacuum suction
+ * - Item collection
+ */
 public class Main implements ApplicationListener {
+
+    private SpriteBatch batch;
+
+    private Vacuum vacuum;
+
+    private List<Item> items;
+
+
     @Override
     public void create() {
-        // Prepare your application here.
+
+        // Create SpriteBatch
+        batch = new SpriteBatch();
+
+
+        // =========================
+        // Create Vacuum
+        // =========================
+
+        vacuum = new Vacuum(
+            400,    // x
+            250,    // y
+            80,     // width
+            80,     // height
+            250     // movement speed
+        );
+
+
+        // =========================
+        // Create Items
+        // =========================
+
+        items = new ArrayList<>();
+
+        // Paper 1
+        items.add(
+            new Item(
+                200,    // x
+                200,    // y
+                50,     // width
+                50,     // height
+                10,     // score
+                5,      // allergy
+                "paper.png"
+            )
+        );
+
+        // Paper 2
+        items.add(
+            new Item(
+                600,
+                350,
+                50,
+                50,
+                10,
+                5,
+                "paper.png"
+            )
+        );
+
+        // Paper 3
+        items.add(
+            new Item(
+                700,
+                150,
+                50,
+                50,
+                10,
+                5,
+                "paper.png"
+            )
+        );
     }
 
-    @Override
-    public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your application here. The parameters represent the new window size.
-    }
 
     @Override
     public void render() {
-        // Draw your application here.
+
+        // Clear the screen
+        Gdx.gl.glClearColor(
+            0.15f,
+            0.15f,
+            0.15f,
+            1
+        );
+
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+
+        // =========================
+        // Update Vacuum
+        // =========================
+
+        float delta = Gdx.graphics.getDeltaTime();
+
+        vacuum.update(delta);
+
+
+        // =========================
+        // Check Suction
+        // =========================
+
+        vacuum.suction(items);
+
+
+        // =========================
+        // Draw
+        // =========================
+
+        batch.begin();
+
+
+        // Draw items
+        for (Item item : items) {
+
+            item.render(batch);
+        }
+
+
+        // Draw vacuum
+        vacuum.render(batch);
+
+
+        batch.end();
     }
+
+
+    @Override
+    public void resize(int width, int height) {
+
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+    }
+
 
     @Override
     public void pause() {
-        // Invoked when your application is paused.
     }
+
 
     @Override
     public void resume() {
-        // Invoked when your application is resumed after pause.
     }
+
 
     @Override
     public void dispose() {
-        // Destroy application's resources here.
+
+        // Dispose vacuum texture
+        if (vacuum != null) {
+            vacuum.dispose();
+        }
+
+
+        // Dispose item textures
+        if (items != null) {
+
+            for (Item item : items) {
+                item.dispose();
+            }
+        }
+
+
+        // Dispose SpriteBatch
+        if (batch != null) {
+            batch.dispose();
+        }
     }
 }
