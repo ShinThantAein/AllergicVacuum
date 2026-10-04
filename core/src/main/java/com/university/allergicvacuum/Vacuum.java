@@ -25,6 +25,7 @@ public class Vacuum {
     // Visual representation
     private final Texture texture;
 
+    private float rotation = 0f;
 
     // Constructor
     public Vacuum(float x, float y, float width, float height, float speed) {
@@ -37,7 +38,7 @@ public class Vacuum {
         this.speed = speed;
 
         // Suction radius
-        float suctionRadius = width * 1.5f;
+        float suctionRadius = width * 0.6f;
 
         this.suctionArea = new Circle(
             x + width / 2f,
@@ -97,6 +98,12 @@ public class Vacuum {
 
         position.x += movementX;
         position.y += movementY;
+
+        if (movementX != 0 || movementY != 0) {
+            rotation = (float) Math.toDegrees(
+                Math.atan2(movementY, movementX)
+            );
+        }
     }
 
 
@@ -117,19 +124,21 @@ public class Vacuum {
      *
      * @param items list of items currently in the room
      */
-    public void suction(List<Item> items) {
+    public int suction(List<Item> items) {
+        int allergyAdded = 0;
 
         for (Item item : items) {
-
             if (item == null || item.isCollected()) {
                 continue;
             }
 
             if (isInsideSuctionArea(item)) {
-
-                collect(item);
+                item.collect();
+                allergyAdded += item.getAllergyValue();
             }
         }
+
+        return allergyAdded;
     }
 
 
@@ -167,13 +176,23 @@ public class Vacuum {
 
     /** Draws the vacuum on the screen */
     public void render(SpriteBatch batch) {
-
         batch.draw(
             texture,
             position.x,
             position.y,
+            width / 2f,
+            height / 2f,
             width,
-            height
+            height,
+            1f,
+            1f,
+            rotation,
+            0,
+            0,
+            texture.getWidth(),
+            texture.getHeight(),
+            false,
+            false
         );
     }
 
