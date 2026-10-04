@@ -4,96 +4,82 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
-/**
- * Base class for all collectible objects in KEEC.
- *
- * Responsibilities:
- * - Store the item's position
- * - Store the item's size
- * - Store its visible score
- * - Store its hidden allergy value
- * - Know whether it has been collected
- * - Draw itself
- *
- * Specific item types such as Paper, Toy, Can, and Box
- * can extend this class later.
- */
 public class Item {
 
-    // =========================
-    // Item properties
-    // =========================
+    // Item position and size
+    private final Vector2 position;
+    private final float width;
+    private final float height;
 
-    protected Vector2 position;
+    // Item information
+    private final String type;
+    private final int score;
+    private final int allergyValue;
 
-    protected float width;
-    protected float height;
+    // Item image
+    private final Texture texture;
 
-    // Score shown to the player
-    protected int score;
-
-    // Hidden allergy value
-    protected int allergyValue;
-
-    // Whether the vacuum has collected this item
-    protected boolean collected;
-
-    // Image used to display the item
-    protected Texture texture;
+    // Checks if the item has been collected
+    private boolean collected;
 
 
-    // =========================
     // Constructor
-    // =========================
-
-    public Item(
-        float x,
-        float y,
-        float width,
-        float height,
-        int score,
-        int allergyValue,
-        String texturePath
-    ) {
+    public Item(float x, float y, float width, float height,
+                String type, int score, int allergyValue) {
 
         this.position = new Vector2(x, y);
 
         this.width = width;
         this.height = height;
 
+        this.type = type;
         this.score = score;
         this.allergyValue = allergyValue;
 
         this.collected = false;
 
-        this.texture = new Texture(texturePath);
+
+        // Choose the correct image
+        if (type.equals("Paper")) {
+
+            texture = new Texture("paper.jpg");
+
+        } else if (type.equals("Plastic Bag")) {
+
+            texture = new Texture("plasticbag.jpg");
+
+        } else if (type.equals("Can")) {
+
+            texture = new Texture("can.jpg");
+
+        } else if (type.equals("Toy")) {
+
+            texture = new Texture("toy1.jpg");
+
+        } else if (type.equals("Toy1")) {
+
+            texture = new Texture("toy1.jpg");
+
+        } else if (type.equals("Toy2")) {
+
+            texture = new Texture("toy2.jpg");
+
+        } else if (type.equals("Toy3")) {
+
+            texture = new Texture("toy3.jpg");
+
+        } else {
+
+            // Default image
+            texture = new Texture("paper.jpg");
+        }
     }
 
 
     // =========================
-    // Update
+    // Draw Item
     // =========================
 
-    /**
-     * Updates the item.
-     *
-     * Currently the item does not move,
-     * but this method allows us to add
-     * behavior later.
-     */
-    public void update(float delta) {
-
-        // Nothing needed for now.
-    }
-
-
-    // =========================
-    // Draw
-    // =========================
-
-    /**
-     * Draws the item if it has not been collected.
-     */
     public void render(SpriteBatch batch) {
 
         if (!collected) {
@@ -113,52 +99,21 @@ public class Item {
     // Collection
     // =========================
 
-    /**
-     * Marks this item as collected.
-     */
     public void collect() {
 
         collected = true;
     }
 
 
-    /**
-     * Returns whether this item has been collected.
-     */
     public boolean isCollected() {
 
         return collected;
     }
 
 
-    /**
-     * Makes the item appear in the room again.
-     *
-     * This will be useful after the vacuum sneezes.
-     */
-    public void eject(float x, float y) {
-
-        position.set(x, y);
-
-        collected = false;
-    }
-
-
     // =========================
     // Position
     // =========================
-
-    public float getX() {
-
-        return position.x;
-    }
-
-
-    public float getY() {
-
-        return position.y;
-    }
-
 
     public float getCenterX() {
 
@@ -175,6 +130,18 @@ public class Item {
     public Vector2 getPosition() {
 
         return position;
+    }
+
+
+    public float getX() {
+
+        return position.x;
+    }
+
+
+    public float getY() {
+
+        return position.y;
     }
 
 
@@ -195,8 +162,14 @@ public class Item {
 
 
     // =========================
-    // Score
+    // Item Information
     // =========================
+
+    public String getType() {
+
+        return type;
+    }
+
 
     public int getScore() {
 
@@ -204,16 +177,6 @@ public class Item {
     }
 
 
-    // =========================
-    // Allergy
-    // =========================
-
-    /**
-     * Returns the hidden allergy value.
-     *
-     * The UI should NOT display this value
-     * to the player during normal gameplay.
-     */
     public int getAllergyValue() {
 
         return allergyValue;
@@ -224,14 +187,8 @@ public class Item {
     // Dispose
     // =========================
 
-    /**
-     * Releases the item's texture.
-     */
     public void dispose() {
 
-        if (texture != null) {
-
-            texture.dispose();
-        }
+        texture.dispose();
     }
 }
