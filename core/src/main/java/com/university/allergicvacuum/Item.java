@@ -182,6 +182,9 @@ public class Item {
         return allergyValue;
     }
 
+    public void reset() {
+        collected = false;
+    }
 
     // =========================
     // Dispose
