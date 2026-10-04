@@ -46,7 +46,7 @@ public class Vacuum {
         );
 
         // Temporary vacuum image
-        this.texture = new Texture("vacuum.png");
+        this.texture = new Texture("vacuum.jpg");
     }
 
 
