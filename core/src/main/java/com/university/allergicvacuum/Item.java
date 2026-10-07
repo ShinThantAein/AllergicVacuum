@@ -22,7 +22,6 @@ public class Item {
     // Checks if the item has been collected
     private boolean collected;
 
-
     // Constructor
     public Item(float x, float y, float width, float height,
                 String type, int score, int allergyValue) {
