@@ -1,4 +1,3 @@
-
 package com.university.allergicvacuum;
 
 import com.badlogic.gdx.Gdx;
