@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public class Vacuum {
 
     private float rotation = 0f;
 
+    // Shaking before a sneeze
+    private static final float SHAKE_DISTANCE = 4f;
+    private static final float SHAKE_ANGLE = 8f;
+    private boolean shaking = false;
+
     // Constructor
     public Vacuum(float x, float y, float width, float height, float speed) {
 
@@ -38,7 +44,7 @@ public class Vacuum {
         this.speed = speed;
 
         // Suction radius
-        float suctionRadius = width * 0.6f;
+        float suctionRadius = width * 0.32f;
 
         this.suctionArea = new Circle(
             x + width / 2f,
@@ -46,8 +52,12 @@ public class Vacuum {
             suctionRadius
         );
 
-        // Temporary vacuum image
-        this.texture = new Texture("vacuum.jpg");
+        // Top-down vacuum image, facing right at rotation 0
+        this.texture = new Texture(Gdx.files.internal("sprites/vacuum.png"), true);
+        this.texture.setFilter(
+            Texture.TextureFilter.MipMapLinearLinear,
+            Texture.TextureFilter.Linear
+        );
     }
 
 
@@ -99,11 +109,29 @@ public class Vacuum {
         position.x += movementX;
         position.y += movementY;
 
+        keepOnScreen();
+
         if (movementX != 0 || movementY != 0) {
             rotation = (float) Math.toDegrees(
                 Math.atan2(movementY, movementX)
             );
         }
+    }
+
+
+    /** Stops the vacuum from leaving the window. */
+    private void keepOnScreen() {
+        position.x = MathUtils.clamp(
+            position.x,
+            0f,
+            Gdx.graphics.getWidth() - width
+        );
+
+        position.y = MathUtils.clamp(
+            position.y,
+            0f,
+            Gdx.graphics.getHeight() - height
+        );
     }
 
 
@@ -128,7 +156,7 @@ public class Vacuum {
         int allergyAdded = 0;
 
         for (Item item : items) {
-            if (item == null || item.isCollected()) {
+            if (item == null || item.isCollected() || item.isFlying()) {
                 continue;
             }
 
@@ -140,8 +168,6 @@ public class Vacuum {
 
         return allergyAdded;
     }
-
-
     /**
      * Checks whether an item is inside
      * the vacuum's suction area.
@@ -155,38 +181,43 @@ public class Vacuum {
     }
 
 
-    /**
-     * Collects an item.
-     *
-     * The Vacuum only tells the Item that it
-     * has been collected.
-     *
-     * Score and allergy handling should be
-     * managed by the appropriate systems.
-     */
-    private void collect(Item item) {
-
-        item.collect();
-    }
-
-
     // =========================
     // Drawing
     // =========================
 
     /** Draws the vacuum on the screen */
     public void render(SpriteBatch batch) {
+        // Fit the image inside the vacuum box without stretching it
+        float scale = Math.min(
+            width / texture.getWidth(),
+            height / texture.getHeight()
+        );
+
+        float drawWidth = texture.getWidth() * scale;
+        float drawHeight = texture.getHeight() * scale;
+
+        // Jitter the image while a sneeze is coming
+        float shakeX = 0f;
+        float shakeY = 0f;
+        float shakeRotation = 0f;
+
+        if (shaking) {
+            shakeX = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeY = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeRotation = MathUtils.random(-SHAKE_ANGLE, SHAKE_ANGLE);
+        }
+
         batch.draw(
             texture,
-            position.x,
-            position.y,
-            width / 2f,
-            height / 2f,
-            width,
-            height,
+            position.x + (width - drawWidth) / 2f + shakeX,
+            position.y + (height - drawHeight) / 2f + shakeY,
+            drawWidth / 2f,
+            drawHeight / 2f,
+            drawWidth,
+            drawHeight,
             1f,
             1f,
-            rotation,
+            rotation + shakeRotation,
             0,
             0,
             texture.getWidth(),
@@ -237,6 +268,11 @@ public class Vacuum {
     }
 
 
+    public void setShaking(boolean shaking) {
+        this.shaking = shaking;
+    }
+
+
     // =========================
     // Dispose
     // =========================
@@ -250,4 +286,3 @@ public class Vacuum {
         texture.dispose();
     }
 }
-

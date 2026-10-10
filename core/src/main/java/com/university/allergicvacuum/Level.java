@@ -1,12 +1,32 @@
 package com.university.allergicvacuum;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.Gdx;
 
 public class Level {
+
+    // Width and height of the box each item is drawn in
+    private static final float ITEM_SIZE = 62f;
+
+    // Floor area of the room background, as fractions of the screen size
+    private static final float FLOOR_LEFT = 0.18f;
+    private static final float FLOOR_RIGHT = 0.86f;
+    private static final float FLOOR_BOTTOM = 0.14f;
+    private static final float FLOOR_TOP = 0.74f;
+
+    // Allergy added by plastic and metal items, and by everything else
+    private static final int HIGH_ALLERGY = 15;
+    private static final int LOW_ALLERGY = 5;
+
+    // Minimum empty space kept between scattered items
+    private static final float ITEM_SPACING = 20f;
+    private static final int PLACEMENT_ATTEMPTS = 30;
 
     // Level information
     private final int levelNumber;
@@ -14,21 +34,38 @@ public class Level {
     private final int targetScore;
     private final float timeLimit;
 
+    // Allergy at which the vacuum sneezes out everything it collected
+    private final float maxAllergy;
+
     // Items in this room
     private final List<Item> items;
     private Texture background;
 
     // Constructor
-    public Level(
-        int levelNumber,
-        String roomName,
-        int targetScore,
-        float timeLimit
-    ) {
+    public Level(int levelNumber) {
         this.levelNumber = levelNumber;
-        this.roomName = roomName;
-        this.targetScore = targetScore;
-        this.timeLimit = timeLimit;
+
+        switch (levelNumber) {
+            case 1:
+                roomName = "Living Room";
+                targetScore = 100;
+                timeLimit = 60f;
+                maxAllergy = 50f;
+                break;
+            case 2:
+                roomName = "Bedroom";
+                targetScore = 150;
+                timeLimit = 65f;
+                maxAllergy = 50f;
+                break;
+            default:
+                // Level 3, the last level
+                roomName = "Kitchen";
+                targetScore = 155;
+                timeLimit = 70f;
+                maxAllergy = 55f;
+                break;
+        }
 
         this.items = new ArrayList<>();
     }
@@ -38,7 +75,17 @@ public class Level {
             background.dispose();
         }
 
-        background = new Texture("living_room.jpg");
+        switch (levelNumber) {
+            case 1:
+                background = new Texture("living_room.jpg");
+                break;
+            case 2:
+                background = new Texture("bedroom.jpg");
+                break;
+            default:
+                background = new Texture("kitchen.jpg");
+                break;
+        }
     }
 
     public void renderBackground(SpriteBatch batch) {
@@ -53,118 +100,220 @@ public class Level {
         }
     }
 
-    // Load items for this room
-    public void loadLevel() {
+    /**
+     * Creates the items for this room and scatters them
+     * randomly across the floor.
+     *
+     * @param keepClear area where no item may be placed,
+     *                  such as the vacuum's starting spot
+     */
+    public void loadLevel(Rectangle keepClear) {
 
         // Avoid adding duplicate items if the level is loaded again
         if (!items.isEmpty()) {
             return;
         }
 
+        // In every level, collecting all items gives more allergy than
+        // maxAllergy, so the player has to skip some cans and plastic
+        // bags to win without sneezing.
         switch (levelNumber) {
 
             case 1:
-                // Living Room
-                items.add(new Item(
-                    200, 200, 50, 50,
-                    "Paper", 10, 5
-                ));
-
-                items.add(new Item(
-                    600, 350, 50, 50,
-                    "Plastic Bag", 20, 10
-                ));
-
-                items.add(new Item(
-                    700, 150, 50, 50,
-                    "Can", 30, 15
-                ));
-
-                items.add(new Item(
-                    300, 450, 50, 50,
-                    "Toy", 40, 20
-                ));
-
-                items.add(new Item(
-                    500, 200, 50, 50,
-                    "Paper", 10, 5
-                ));
+                // Living Room: 175 score, 60 allergy in total
+                addItems("Paper", 2);
+                addItems("Plastic Bag", 1);
+                addItems("Can", 1);
+                addItems("Toy", 1);
+                addItems("Bag", 1);
+                addItems("Book", 1);
+                addItems("Cloth", 1);
                 break;
-
             case 2:
-                // Bedroom
-                items.add(new Item(
-                    150, 180, 50, 50,
-                    "Toy1", 20, 10
-                ));
-
-                items.add(new Item(
-                    350, 400, 50, 50,
-                    "Paper", 10, 5
-                ));
-
-                items.add(new Item(
-                    600, 250, 50, 50,
-                    "Plastic Bag", 20, 10
-                ));
-
-                items.add(new Item(
-                    800, 400, 50, 50,
-                    "Toy2", 40, 20
-                ));
-
-                items.add(new Item(
-                    700, 150, 50, 50,
-                    "Can", 30, 15
-                ));
+                // Bedroom: 270 score, 95 allergy in total
+                addItems("Cloth", 1);
+                addItems("Book", 1);
+                addItems("Paper", 2);
+                addItems("Toy1", 1);
+                addItems("Toy2", 1);
+                addItems("Plastic Bag", 2);
+                addItems("Bag", 1);
+                addItems("Can", 2);
                 break;
-
-            case 3:
-                // Kitchen
-                items.add(new Item(
-                    180, 300, 50, 50,
-                    "Can", 30, 15
-                ));
-
-                items.add(new Item(
-                    350, 180, 50, 50,
-                    "Plastic Bag", 20, 10
-                ));
-
-                items.add(new Item(
-                    550, 400, 50, 50,
-                    "Paper", 10, 5
-                ));
-
-                items.add(new Item(
-                    750, 250, 50, 50,
-                    "Can", 30, 15
-                ));
-
-                items.add(new Item(
-                    850, 400, 50, 50,
-                    "Toy3", 40, 20
-                ));
-                break;
-
             default:
-                // Fallback room for levels without a defined layout
-                items.add(new Item(
-                    200, 200, 50, 50,
-                    "Paper", 10, 5
-                ));
-
-                items.add(new Item(
-                    400, 350, 50, 50,
-                    "Plastic Bag", 20, 10
-                ));
-
-                items.add(new Item(
-                    650, 200, 50, 50,
-                    "Can", 30, 15
-                ));
+                // Level 3, Kitchen: 290 score, 110 allergy in total
+                addItems("Can", 3);
+                addItems("Plastic Bag", 2);
+                addItems("Paper", 2);
+                addItems("Bag", 1);
+                addItems("Toy3", 1);
+                addItems("Book", 1);
+                addItems("Cloth", 2);
                 break;
         }
+
+        scatterItems(items, keepClear, false);
+    }
+
+    /**
+     * Adds items of one type. Every item of the same type has the same
+     * score and allergy, so players can learn which items are risky.
+     */
+    private void addItems(String type, int count) {
+        int score;
+
+        switch (type) {
+            case "Paper":
+                score = 10;
+                break;
+            case "Cloth":
+                score = 15;
+                break;
+            case "Bag":
+                score = 20;
+                break;
+            case "Book":
+                score = 25;
+                break;
+            case "Plastic Bag":
+                score = 30;
+                break;
+            case "Can":
+                score = 35;
+                break;
+            default:
+                // Toys
+                score = 30;
+                break;
+        }
+
+        // The vacuum is allergic to plastic and metal
+        boolean plasticOrMetal = type.equals("Plastic Bag") || type.equals("Can");
+        int allergyValue = plasticOrMetal ? HIGH_ALLERGY : LOW_ALLERGY;
+
+        for (int i = 0; i < count; i++) {
+            items.add(new Item(
+                0, 0, ITEM_SIZE, ITEM_SIZE,
+                type, score, allergyValue
+            ));
+        }
+    }
+
+    /**
+     * The vacuum sneezes: every collected item shoots back out of it,
+     * and all items fly to new random spots away from the vacuum.
+     *
+     * @param fromX     centre of the vacuum, where collected items come out
+     * @param fromY     centre of the vacuum, where collected items come out
+     * @param keepClear area around the vacuum where no item may land
+     */
+    public void sneezeScatter(float fromX, float fromY, Rectangle keepClear) {
+        for (Item item : items) {
+            if (item.isCollected()) {
+                item.reset();
+                item.getPosition().set(
+                    fromX - ITEM_SIZE / 2f,
+                    fromY - ITEM_SIZE / 2f
+                );
+            }
+        }
+
+        scatterItems(items, keepClear, true);
+    }
+
+    /**
+     * Moves the given items to random spots on the floor.
+     *
+     * The floor is split into a grid with at least one cell per item,
+     * and each item goes into a different random cell, so items are
+     * spread over the whole room instead of bunching up in one area.
+     *
+     * @param animate if true, items fly to their new spot instead of jumping
+     */
+    private void scatterItems(List<Item> toPlace, Rectangle keepClear, boolean animate) {
+        if (toPlace.isEmpty()) {
+            return;
+        }
+
+        float floorX = Gdx.graphics.getWidth() * FLOOR_LEFT;
+        float floorY = Gdx.graphics.getHeight() * FLOOR_BOTTOM;
+        float floorWidth = Gdx.graphics.getWidth() * (FLOOR_RIGHT - FLOOR_LEFT);
+        float floorHeight = Gdx.graphics.getHeight() * (FLOOR_TOP - FLOOR_BOTTOM);
+
+        // Pick a grid shape that roughly matches the floor's proportions
+        int columns = Math.max(1, MathUtils.ceil(
+            (float) Math.sqrt(toPlace.size() * floorWidth / floorHeight)
+        ));
+        int rows = Math.max(1, MathUtils.ceil((float) toPlace.size() / columns));
+
+        float cellWidth = floorWidth / columns;
+        float cellHeight = floorHeight / rows;
+
+        List<Rectangle> cells = new ArrayList<>();
+        for (int row = 0; row < rows; row++) {
+            for (int column = 0; column < columns; column++) {
+                cells.add(new Rectangle(
+                    floorX + column * cellWidth,
+                    floorY + row * cellHeight,
+                    cellWidth,
+                    cellHeight
+                ));
+            }
+        }
+
+        Collections.shuffle(cells);
+
+        Rectangle spot = new Rectangle();
+        int nextCell = 0;
+        for (Item item : toPlace) {
+            boolean placed = false;
+
+            while (!placed && nextCell < cells.size()) {
+                placed = pickSpotInCell(cells.get(nextCell), keepClear, spot);
+                nextCell++;
+            }
+
+            // More items than free cells: fall back to anywhere on the floor
+            if (!placed) {
+                pickSpotInCell(
+                    new Rectangle(floorX, floorY, floorWidth, floorHeight),
+                    null,
+                    spot
+                );
+            }
+
+            if (animate) {
+                item.flyTo(spot.x, spot.y);
+            } else {
+                item.getPosition().set(spot.x, spot.y);
+            }
+        }
+    }
+
+    /**
+     * Picks a random item position inside the cell that does not
+     * touch keepClear. Returns false if no such position was found.
+     */
+    private boolean pickSpotInCell(Rectangle cell, Rectangle keepClear, Rectangle spot) {
+        float minX = cell.x + ITEM_SPACING / 2f;
+        float minY = cell.y + ITEM_SPACING / 2f;
+        float maxX = Math.max(minX, cell.x + cell.width - ITEM_SIZE - ITEM_SPACING / 2f);
+        float maxY = Math.max(minY, cell.y + cell.height - ITEM_SIZE - ITEM_SPACING / 2f);
+
+        for (int attempt = 0; attempt < PLACEMENT_ATTEMPTS; attempt++) {
+            spot.set(
+                MathUtils.random(minX, maxX),
+                MathUtils.random(minY, maxY),
+                ITEM_SIZE,
+                ITEM_SIZE
+            );
+
+            if (keepClear == null || !spot.overlaps(keepClear)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Get all items in this level
@@ -192,11 +341,18 @@ public class Level {
         return timeLimit;
     }
 
-    // Reset collected items for replaying this room
-    public void resetLevel() {
+    // Get the allergy that makes the vacuum sneeze
+    public float getMaxAllergy() {
+        return maxAllergy;
+    }
+
+    // Reset collected items and scatter them again for replaying this room
+    public void resetLevel(Rectangle keepClear) {
         for (Item item : items) {
             item.reset();
         }
+
+        scatterItems(items, keepClear, false);
     }
 
     // Release item textures
