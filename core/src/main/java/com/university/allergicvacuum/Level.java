@@ -56,14 +56,14 @@ public class Level {
                 roomName = "Bedroom";
                 targetScore = 150;
                 timeLimit = 65f;
-                maxAllergy = 70f;
+                maxAllergy = 50f;
                 break;
             default:
                 // Level 3, the last level
                 roomName = "Kitchen";
-                targetScore = 180;
+                targetScore = 155;
                 timeLimit = 70f;
-                maxAllergy = 90f;
+                maxAllergy = 55f;
                 break;
         }
 
@@ -75,7 +75,17 @@ public class Level {
             background.dispose();
         }
 
-        background = new Texture("living_room.jpg");
+        switch (levelNumber) {
+            case 1:
+                background = new Texture("living_room.jpg");
+                break;
+            case 2:
+                background = new Texture("bedroom.jpg");
+                break;
+            default:
+                background = new Texture("kitchen.jpg");
+                break;
+        }
     }
 
     public void renderBackground(SpriteBatch batch) {
@@ -110,7 +120,7 @@ public class Level {
         switch (levelNumber) {
 
             case 1:
-                // Living Room: 145 score, 60 allergy in total
+                // Living Room: 175 score, 60 allergy in total
                 addItems("Paper", 2);
                 addItems("Plastic Bag", 1);
                 addItems("Can", 1);
@@ -119,9 +129,8 @@ public class Level {
                 addItems("Book", 1);
                 addItems("Cloth", 1);
                 break;
-
             case 2:
-                // Bedroom: 210 score, 95 allergy in total
+                // Bedroom: 270 score, 95 allergy in total
                 addItems("Cloth", 1);
                 addItems("Book", 1);
                 addItems("Paper", 2);
@@ -132,15 +141,15 @@ public class Level {
                 addItems("Can", 2);
                 break;
             default:
-            // Level 3, Kitchen: 215 score, 110 allergy in total
-            addItems("Can", 3);
-            addItems("Plastic Bag", 2);
-            addItems("Paper", 2);
-            addItems("Bag", 1);
-            addItems("Toy3", 1);
-            addItems("Book", 1);
-            addItems("Cloth", 2);
-            break;
+                // Level 3, Kitchen: 290 score, 110 allergy in total
+                addItems("Can", 3);
+                addItems("Plastic Bag", 2);
+                addItems("Paper", 2);
+                addItems("Bag", 1);
+                addItems("Toy3", 1);
+                addItems("Book", 1);
+                addItems("Cloth", 2);
+                break;
         }
 
         scatterItems(items, keepClear, false);
@@ -157,16 +166,20 @@ public class Level {
             case "Paper":
                 score = 10;
                 break;
-            case "Plastic Bag":
             case "Cloth":
                 score = 15;
                 break;
-            case "Can":
             case "Bag":
                 score = 20;
                 break;
             case "Book":
                 score = 25;
+                break;
+            case "Plastic Bag":
+                score = 30;
+                break;
+            case "Can":
+                score = 35;
                 break;
             default:
                 // Toys
@@ -237,7 +250,6 @@ public class Level {
         float cellHeight = floorHeight / rows;
 
         List<Rectangle> cells = new ArrayList<>();
-
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) {
                 cells.add(new Rectangle(
