@@ -28,6 +28,11 @@ public class Vacuum {
 
     private float rotation = 0f;
 
+    // Shaking before a sneeze
+    private static final float SHAKE_DISTANCE = 4f;
+    private static final float SHAKE_ANGLE = 8f;
+    private boolean shaking = false;
+
     // Constructor
     public Vacuum(float x, float y, float width, float height, float speed) {
 
@@ -151,7 +156,7 @@ public class Vacuum {
         int allergyAdded = 0;
 
         for (Item item : items) {
-            if (item == null || item.isCollected()) {
+            if (item == null || item.isCollected() || item.isFlying()) {
                 continue;
             }
 
@@ -193,17 +198,28 @@ public class Vacuum {
         float drawWidth = texture.getWidth() * scale;
         float drawHeight = texture.getHeight() * scale;
 
+        // Jitter the image while a sneeze is coming
+        float shakeX = 0f;
+        float shakeY = 0f;
+        float shakeRotation = 0f;
+
+        if (shaking) {
+            shakeX = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeY = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeRotation = MathUtils.random(-SHAKE_ANGLE, SHAKE_ANGLE);
+        }
+
         batch.draw(
             texture,
-            position.x + (width - drawWidth) / 2f,
-            position.y + (height - drawHeight) / 2f,
+            position.x + (width - drawWidth) / 2f + shakeX,
+            position.y + (height - drawHeight) / 2f + shakeY,
             drawWidth / 2f,
             drawHeight / 2f,
             drawWidth,
             drawHeight,
             1f,
             1f,
-            rotation,
+            rotation + shakeRotation,
             0,
             0,
             texture.getWidth(),
@@ -251,6 +267,11 @@ public class Vacuum {
 
     public Circle getSuctionArea() {
         return suctionArea;
+    }
+
+
+    public void setShaking(boolean shaking) {
+        this.shaking = shaking;
     }
 
 

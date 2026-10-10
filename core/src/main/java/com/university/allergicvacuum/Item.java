@@ -3,6 +3,7 @@ package com.university.allergicvacuum;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 
 import java.util.HashMap;
@@ -30,6 +31,14 @@ public class Item {
 
     // Checks if the item has been collected
     private boolean collected;
+
+    // Flight to a new spot after the vacuum sneezes
+    private static final float FLIGHT_DURATION = 0.7f;
+    private final Vector2 flightStart = new Vector2();
+    private final Vector2 flightEnd = new Vector2();
+    private float flightElapsed;
+    private boolean flying;
+    private float rotation;
 
     // Constructor
     public Item(float x, float y, float width, float height,
@@ -142,10 +151,66 @@ public class Item {
                 texture,
                 position.x + (width - drawWidth) / 2f,
                 position.y + (height - drawHeight) / 2f,
+                drawWidth / 2f,
+                drawHeight / 2f,
                 drawWidth,
-                drawHeight
+                drawHeight,
+                1f,
+                1f,
+                rotation,
+                0,
+                0,
+                texture.getWidth(),
+                texture.getHeight(),
+                false,
+                false
             );
         }
+    }
+
+
+    // =========================
+    // Flight
+    // =========================
+
+    /** Starts flying from the current position to (x, y). */
+    public void flyTo(float x, float y) {
+
+        flightStart.set(position);
+        flightEnd.set(x, y);
+        flightElapsed = 0f;
+        flying = true;
+    }
+
+
+    public void update(float delta) {
+
+        if (!flying) {
+            return;
+        }
+
+        flightElapsed += delta;
+        float progress = Math.min(1f, flightElapsed / FLIGHT_DURATION);
+
+        position.set(flightStart).lerp(
+            flightEnd,
+            Interpolation.pow2Out.apply(progress)
+        );
+
+        // One full spin while flying
+        rotation = 360f * progress;
+
+        if (progress >= 1f) {
+            flying = false;
+            rotation = 0f;
+        }
+    }
+
+
+    /** Items can't be collected while they are flying. */
+    public boolean isFlying() {
+
+        return flying;
     }
 
 
@@ -238,6 +303,8 @@ public class Item {
 
     public void reset() {
         collected = false;
+        flying = false;
+        rotation = 0f;
     }
 
     // =========================
