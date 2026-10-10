@@ -1,3 +1,4 @@
+
 package com.university.allergicvacuum;
 
 import com.badlogic.gdx.graphics.Color;
@@ -6,10 +7,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 /**
- * The vacuum's sneeze when its allergy meter is full.
- *
- * The vacuum first shakes as a warning, then sneezes, which blows
- * everything it collected back out across the room.
+ * Handles the vacuum's sneeze when its allergy meter is full.
+ * The vacuum shakes before sneezing and scattering collected items.
  */
 public class SneezeEvent {
 
@@ -33,13 +32,13 @@ public class SneezeEvent {
         font.getData().setScale(1.4f);
     }
 
-    /** Cancels any sneeze in progress, e.g. when a level restarts. */
+    /** Cancels any sneeze in progress. */
     public void reset() {
         phase = Phase.IDLE;
         timer = 0f;
     }
 
-    /** Starts the warning shake, unless a sneeze is already on its way. */
+    /** Starts the warning shake. */
     public void start() {
         if (phase == Phase.IDLE) {
             phase = Phase.WARNING;
@@ -48,9 +47,8 @@ public class SneezeEvent {
     }
 
     /**
-     * Advances the sneeze.
-     *
-     * @return true on the frame the vacuum sneezes
+     * Advances the sneeze animation.
+     * @return true when the vacuum sneezes.
      */
     public boolean update(float delta) {
         if (phase == Phase.IDLE) {
@@ -73,12 +71,12 @@ public class SneezeEvent {
         return false;
     }
 
-    /** True while the vacuum is shaking before a sneeze. */
+    /** Returns true while the vacuum is shaking. */
     public boolean isWarning() {
         return phase == Phase.WARNING;
     }
 
-    /** Draws "Ah... ah..." or "ACHOO!" above the vacuum. */
+    /** Draws the sneeze text above the vacuum. */
     public void render(SpriteBatch batch, Vacuum vacuum) {
         String text;
 
@@ -97,7 +95,8 @@ public class SneezeEvent {
         font.draw(
             batch,
             layout,
-            vacuum.getX() + (vacuum.getWidth() - layout.width) / 2f,
+            vacuum.getX()
+                + (vacuum.getWidth() - layout.width) / 2f,
             vacuum.getY() + vacuum.getHeight()
         );
     }

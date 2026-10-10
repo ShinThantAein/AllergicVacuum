@@ -1,3 +1,4 @@
+
 package com.university.allergicvacuum;
 
 import com.badlogic.gdx.ApplicationListener;
@@ -20,6 +21,7 @@ public class Main implements ApplicationListener {
     private Level currentLevel;
     private GameUI gameUI;
     private SneezeEvent sneeze;
+    private GameAudio audio;
 
     private enum GameState {
         PLAYING,
@@ -30,6 +32,8 @@ public class Main implements ApplicationListener {
     private GameState gameState = GameState.PLAYING;
     private Rectangle buttonBounds;
 
+    private static final int LAST_LEVEL = 3;
+
     private int levelNumber = 1;
 
     private static final float VACUUM_START_X = 400f;
@@ -39,6 +43,7 @@ public class Main implements ApplicationListener {
     public void create() {
         batch = new SpriteBatch();
         shapes = new ShapeRenderer();
+
         popupFont = new BitmapFont();
         popupFont.getData().setScale(1.5f);
 
@@ -62,18 +67,22 @@ public class Main implements ApplicationListener {
         );
 
         sneeze = new SneezeEvent();
+
+        audio = new GameAudio();
+        audio.startMusic();
     }
 
     private void loadLevel() {
-        // Create the current room.
         currentLevel = new Level(levelNumber);
 
-        currentLevel.loadLevel(areaAroundVacuum(VACUUM_START_X, VACUUM_START_Y));
+        currentLevel.loadLevel(
+            areaAroundVacuum(VACUUM_START_X, VACUUM_START_Y)
+        );
+
         currentLevel.loadBackground();
     }
 
     private Rectangle areaAroundVacuum(float x, float y) {
-        // Extra space so no item lands already within the vacuum's reach.
         float margin = 40f;
 
         return new Rectangle(
@@ -95,15 +104,12 @@ public class Main implements ApplicationListener {
 
         batch.begin();
 
-        // Draw background first.
         currentLevel.renderBackground(batch);
 
-        // Draw collectible objects.
         for (Item item : currentLevel.getItems()) {
             item.render(batch);
         }
 
-        // Draw player and HUD.
         vacuum.render(batch);
         sneeze.render(batch, vacuum);
         gameUI.render(batch);
@@ -125,28 +131,37 @@ public class Main implements ApplicationListener {
             item.update(delta);
         }
 
-        // Collect nearby items and add their allergy values.
+        // Collect items and increase the allergy meter.
         int allergyAdded = vacuum.suction(items);
         gameUI.addAllergy(allergyAdded);
 
-        // A full allergy meter makes the vacuum shake, then sneeze out
-        // everything it collected.
+        if (allergyAdded > 0) {
+            audio.playCollect();
+        }
+
+        // Start the sneeze warning when the allergy meter is full.
         if (gameUI.getAllergy() >= gameUI.getMaxAllergy()) {
             sneeze.start();
         }
 
+        // Scatter collected items when the vacuum sneezes.
         if (sneeze.update(delta)) {
             currentLevel.sneezeScatter(
                 vacuum.getX() + vacuum.getWidth() / 2f,
                 vacuum.getY() + vacuum.getHeight() / 2f,
-                areaAroundVacuum(vacuum.getX(), vacuum.getY())
+                areaAroundVacuum(
+                    vacuum.getX(),
+                    vacuum.getY()
+                )
             );
+
             gameUI.setAllergy(0f);
+            audio.playSneeze();
         }
 
         vacuum.setShaking(sneeze.isWarning());
 
-        // Calculate score from collected items.
+        // Calculate the total score.
         int totalScore = 0;
 
         for (Item item : items) {
@@ -158,15 +173,18 @@ public class Main implements ApplicationListener {
         gameUI.setScore(totalScore);
         gameUI.update(delta);
 
-        // Decide whether the level has ended.
+        // Check whether the player wins or loses.
         if (gameUI.isLevelComplete()) {
             gameState = GameState.WON;
+            audio.playWin();
         } else if (gameUI.isGameOver()) {
             gameState = GameState.LOST;
+            audio.playLose();
         }
 
         if (gameState != GameState.PLAYING) {
             vacuum.setShaking(false);
+            audio.pauseMusic();
         }
     }
 
@@ -191,6 +209,7 @@ public class Main implements ApplicationListener {
         );
 
         Gdx.gl.glEnable(GL20.GL_BLEND);
+
         Gdx.gl.glBlendFunc(
             GL20.GL_SRC_ALPHA,
             GL20.GL_ONE_MINUS_SRC_ALPHA
@@ -198,13 +217,18 @@ public class Main implements ApplicationListener {
 
         shapes.begin(ShapeRenderer.ShapeType.Filled);
 
-        // Dark overlay.
+        // Dark background overlay.
         shapes.setColor(0f, 0f, 0f, 0.7f);
         shapes.rect(0, 0, screenWidth, screenHeight);
 
         // Popup panel.
         shapes.setColor(0.12f, 0.12f, 0.12f, 1f);
-        shapes.rect(panelX, panelY, panelWidth, panelHeight);
+        shapes.rect(
+            panelX,
+            panelY,
+            panelWidth,
+            panelHeight
+        );
 
         // Button color.
         if (gameState == GameState.WON) {
@@ -231,13 +255,19 @@ public class Main implements ApplicationListener {
             ? "You Win!!"
             : "You Lose!!";
 
-        String message = gameState == GameState.WON
-            ? "You reached the target score!"
-            : "Time's up!";
+        String message;
+        String buttonText;
 
-        String buttonText = gameState == GameState.WON
-            ? "Next Level"
-            : "Play Again";
+        if (gameState == GameState.LOST) {
+            message = "Time's up!";
+            buttonText = "Play Again";
+        } else if (levelNumber < LAST_LEVEL) {
+            message = "You reached the target score!";
+            buttonText = "Next Level";
+        } else {
+            message = "You cleaned all three rooms!";
+            buttonText = "Play Again";
+        }
 
         popupFont.draw(
             batch,
@@ -273,38 +303,45 @@ public class Main implements ApplicationListener {
         }
 
         float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        float mouseY =
+            Gdx.graphics.getHeight() - Gdx.input.getY();
 
         if (buttonBounds.contains(mouseX, mouseY)) {
-            if (gameState == GameState.WON) {
-                startNextLevel();
-            } else {
+            if (gameState == GameState.LOST) {
                 restartLevel();
+            } else if (levelNumber < LAST_LEVEL) {
+                goToLevel(levelNumber + 1);
+            } else {
+                goToLevel(1);
             }
         }
     }
 
-    private void startNextLevel() {
-        // Release resources belonging to the previous room.
+    private void goToLevel(int newLevelNumber) {
         currentLevel.dispose();
 
-        levelNumber++;
+        levelNumber = newLevelNumber;
 
-        // Load the next room and reset the game.
         loadLevel();
-
         resetRound();
     }
 
     private void restartLevel() {
-        // Reset the current room's collected items.
-        currentLevel.resetLevel(areaAroundVacuum(VACUUM_START_X, VACUUM_START_Y));
+        currentLevel.resetLevel(
+            areaAroundVacuum(
+                VACUUM_START_X,
+                VACUUM_START_Y
+            )
+        );
 
         resetRound();
     }
 
     private void resetRound() {
-        vacuum.getPosition().set(VACUUM_START_X, VACUUM_START_Y);
+        vacuum.getPosition().set(
+            VACUUM_START_X,
+            VACUUM_START_Y
+        );
 
         gameUI.resetForLevel(
             levelNumber,
@@ -314,6 +351,7 @@ public class Main implements ApplicationListener {
         );
 
         sneeze.reset();
+        audio.startMusic();
 
         gameState = GameState.PLAYING;
     }
@@ -347,6 +385,10 @@ public class Main implements ApplicationListener {
 
         if (sneeze != null) {
             sneeze.dispose();
+        }
+
+        if (audio != null) {
+            audio.dispose();
         }
 
         if (batch != null) {

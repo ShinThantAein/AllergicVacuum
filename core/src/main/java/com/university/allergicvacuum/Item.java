@@ -146,7 +146,6 @@ public class Item {
 
             float drawWidth = texture.getWidth() * scale;
             float drawHeight = texture.getHeight() * scale;
-
             batch.draw(
                 texture,
                 position.x + (width - drawWidth) / 2f,

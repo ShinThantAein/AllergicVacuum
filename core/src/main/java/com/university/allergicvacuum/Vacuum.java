@@ -168,8 +168,6 @@ public class Vacuum {
 
         return allergyAdded;
     }
-
-
     /**
      * Checks whether an item is inside
      * the vacuum's suction area.
@@ -288,4 +286,3 @@ public class Vacuum {
         texture.dispose();
     }
 }
-

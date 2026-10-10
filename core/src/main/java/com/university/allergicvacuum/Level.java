@@ -20,6 +20,10 @@ public class Level {
     private static final float FLOOR_BOTTOM = 0.14f;
     private static final float FLOOR_TOP = 0.74f;
 
+    // Allergy added by plastic and metal items, and by everything else
+    private static final int HIGH_ALLERGY = 15;
+    private static final int LOW_ALLERGY = 5;
+
     // Minimum empty space kept between scattered items
     private static final float ITEM_SPACING = 20f;
     private static final int PLACEMENT_ATTEMPTS = 30;
@@ -46,20 +50,19 @@ public class Level {
                 roomName = "Living Room";
                 targetScore = 100;
                 timeLimit = 60f;
-                maxAllergy = 60f;
+                maxAllergy = 50f;
                 break;
             case 2:
                 roomName = "Bedroom";
                 targetScore = 150;
                 timeLimit = 65f;
-                maxAllergy = 80f;
+                maxAllergy = 70f;
                 break;
             default:
-                // Level 3 and beyond: the kitchen, with less time
-                // for every extra level
+                // Level 3, the last level
                 roomName = "Kitchen";
                 targetScore = 180;
-                timeLimit = Math.max(45f, 70f - 5f * (levelNumber - 3));
+                timeLimit = 70f;
                 maxAllergy = 90f;
                 break;
         }
@@ -102,12 +105,12 @@ public class Level {
         }
 
         // In every level, collecting all items gives more allergy than
-        // maxAllergy, so the player has to skip some dusty items to win
-        // without sneezing.
+        // maxAllergy, so the player has to skip some cans and plastic
+        // bags to win without sneezing.
         switch (levelNumber) {
 
             case 1:
-                // Living Room: 145 score, 79 allergy in total
+                // Living Room: 145 score, 60 allergy in total
                 addItems("Paper", 2);
                 addItems("Plastic Bag", 1);
                 addItems("Can", 1);
@@ -118,71 +121,62 @@ public class Level {
                 break;
 
             case 2:
-                // Bedroom: 190 score, 103 allergy in total
-                addItems("Cloth", 2);
+                // Bedroom: 210 score, 95 allergy in total
+                addItems("Cloth", 1);
                 addItems("Book", 1);
                 addItems("Paper", 2);
                 addItems("Toy1", 1);
                 addItems("Toy2", 1);
-                addItems("Plastic Bag", 1);
-                addItems("Bag", 1);
-                addItems("Can", 1);
-                break;
-
-            default:
-                // Kitchen: 215 score, 108 allergy in total
-                addItems("Can", 3);
                 addItems("Plastic Bag", 2);
-                addItems("Paper", 2);
                 addItems("Bag", 1);
-                addItems("Toy3", 1);
-                addItems("Book", 1);
-                addItems("Cloth", 2);
+                addItems("Can", 2);
                 break;
+            default:
+            // Level 3, Kitchen: 215 score, 110 allergy in total
+            addItems("Can", 3);
+            addItems("Plastic Bag", 2);
+            addItems("Paper", 2);
+            addItems("Bag", 1);
+            addItems("Toy3", 1);
+            addItems("Book", 1);
+            addItems("Cloth", 2);
+            break;
         }
 
         scatterItems(items, keepClear, false);
     }
 
     /**
-     * Adds items of one type. Dusty paper and fabric items are worth
-     * less and cause more allergy than plastic, metal and toy items.
+     * Adds items of one type. Every item of the same type has the same
+     * score and allergy, so players can learn which items are risky.
      */
     private void addItems(String type, int count) {
         int score;
-        int allergyValue;
 
         switch (type) {
             case "Paper":
                 score = 10;
-                allergyValue = 10;
                 break;
             case "Plastic Bag":
+            case "Cloth":
                 score = 15;
-                allergyValue = 5;
                 break;
             case "Can":
-                score = 20;
-                allergyValue = 3;
-                break;
             case "Bag":
                 score = 20;
-                allergyValue = 12;
                 break;
             case "Book":
                 score = 25;
-                allergyValue = 15;
-                break;
-            case "Cloth":
-                score = 15;
-                allergyValue = 18;
                 break;
             default:
                 // Toys
                 score = 30;
-                allergyValue = 6;
                 break;
         }
+
+        // The vacuum is allergic to plastic and metal
+        boolean plasticOrMetal = type.equals("Plastic Bag") || type.equals("Can");
+        int allergyValue = plasticOrMetal ? HIGH_ALLERGY : LOW_ALLERGY;
 
         for (int i = 0; i < count; i++) {
             items.add(new Item(
@@ -259,7 +253,6 @@ public class Level {
 
         Rectangle spot = new Rectangle();
         int nextCell = 0;
-
         for (Item item : toPlace) {
             boolean placed = false;
 
