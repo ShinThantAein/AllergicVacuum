@@ -30,7 +30,7 @@ public class Main implements ApplicationListener {
     private Rectangle buttonBounds;
 
     private int levelNumber = 1;
-    private int targetScore = 50;
+    private int targetScore = targetScoreFor(1);
     private float levelTime = 60f;
     private float maxAllergy = 100f;
 
@@ -49,9 +49,9 @@ public class Main implements ApplicationListener {
         vacuum = new Vacuum(
             VACUUM_START_X,
             VACUUM_START_Y,
-            80,
-            80,
-            250
+            110,
+            110,
+            180
         );
 
         gameUI = new GameUI(
@@ -90,8 +90,31 @@ public class Main implements ApplicationListener {
             levelTime
         );
 
-        currentLevel.loadLevel();
+        currentLevel.loadLevel(vacuumStartArea());
         currentLevel.loadBackground();
+    }
+
+    private static int targetScoreFor(int level) {
+        switch (level) {
+            case 1:
+                // Each item adds half its score as allergy, so targets
+                // must stay below 2 x maxAllergy to be reachable.
+                return 130;
+            default:
+                return 50 * level;
+        }
+    }
+
+    private Rectangle vacuumStartArea() {
+        // Extra space so the vacuum doesn't start with an item already in reach.
+        float margin = 40f;
+
+        return new Rectangle(
+            VACUUM_START_X - margin,
+            VACUUM_START_Y - margin,
+            vacuum.getWidth() + margin * 2,
+            vacuum.getHeight() + margin * 2
+        );
     }
 
     @Override
@@ -274,7 +297,7 @@ public class Main implements ApplicationListener {
         currentLevel.dispose();
 
         levelNumber++;
-        targetScore += 50;
+        targetScore = targetScoreFor(levelNumber);
         levelTime = 60f;
 
         // Load the next room and reset the game.
@@ -294,7 +317,7 @@ public class Main implements ApplicationListener {
 
     private void restartLevel() {
         // Reset the current room's collected items.
-        currentLevel.resetLevel();
+        currentLevel.resetLevel(vacuumStartArea());
 
         vacuum.getPosition().set(VACUUM_START_X, VACUUM_START_Y);
 
