@@ -47,22 +47,22 @@ public class Level {
         switch (levelNumber) {
             case 1:
                 roomName = "Living Room";
-                targetScore = 100;
+                targetScore = 120;
                 timeLimit = 60f;
-                maxAllergy = 50f;
+                maxAllergy = 45f;
                 break;
             case 2:
                 roomName = "Bedroom";
-                targetScore = 150;
+                targetScore = 130;
                 timeLimit = 65f;
-                maxAllergy = 50f;
+                maxAllergy = 40f;
                 break;
             default:
                 // Level 3, the last level
                 roomName = "Kitchen";
-                targetScore = 155;
+                targetScore = 120;
                 timeLimit = 70f;
-                maxAllergy = 55f;
+                maxAllergy = 40f;
                 break;
         }
 
@@ -115,42 +115,49 @@ public class Level {
         }
 
         // In every level, collecting all items gives more allergy than
-        // maxAllergy, so the player has to skip some cans and plastic
-        // bags to win without sneezing.
+        // maxAllergy, so the player has to skip some plastic and metal
+        // items to win without sneezing.
         switch (levelNumber) {
 
             case 1:
-                // Living Room: 175 score, 60 allergy in total
+                // Living Room: 220 score, 80 allergy in total
                 addItems(ItemType.PAPER, 2);
                 addItems(ItemType.PLASTIC_BAG, 1);
+                addItems(ItemType.BOTTLE, 1);
                 addItems(ItemType.CAN, 1);
                 addItems(ItemType.TOY1, 1);
                 addItems(ItemType.BAG, 1);
                 addItems(ItemType.BOOK, 1);
                 addItems(ItemType.CLOTH, 1);
+                addItems(ItemType.BOX, 1);
                 break;
 
             case 2:
-                // Bedroom: 270 score, 95 allergy in total
+                // Bedroom: 300 score, 105 allergy in total
                 addItems(ItemType.CLOTH, 1);
+                addItems(ItemType.SWEATER, 1);
                 addItems(ItemType.BOOK, 1);
                 addItems(ItemType.PAPER, 2);
                 addItems(ItemType.TOY1, 1);
                 addItems(ItemType.TOY2, 1);
                 addItems(ItemType.PLASTIC_BAG, 2);
+                addItems(ItemType.BOX, 1);
                 addItems(ItemType.BAG, 1);
                 addItems(ItemType.CAN, 2);
                 break;
 
             default:
-                // Level 3, Kitchen: 290 score, 110 allergy in total
-                addItems(ItemType.CAN, 3);
-                addItems(ItemType.PLASTIC_BAG, 2);
-                addItems(ItemType.PAPER, 2);
+                // Level 3, Kitchen: 325 score, 125 allergy in total
+                addItems(ItemType.CAN, 2);
+                addItems(ItemType.BOTTLE, 1);
+                addItems(ItemType.PLASTIC_BAG, 1);
+                addItems(ItemType.PAN, 1);
+                addItems(ItemType.FRIDGE, 1);
+                addItems(ItemType.EGG, 2);
+                addItems(ItemType.OIL, 2);
+                addItems(ItemType.PAPER, 1);
                 addItems(ItemType.BAG, 1);
                 addItems(ItemType.TOY3, 1);
-                addItems(ItemType.BOOK, 1);
-                addItems(ItemType.CLOTH, 2);
                 break;
         }
 

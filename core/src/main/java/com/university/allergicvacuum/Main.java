@@ -137,8 +137,13 @@ public class Main implements ApplicationListener {
         List<Item> items = currentLevel.getItems();
 
         // Collect items and increase the allergy meter.
-        int allergyAdded = vacuum.suction(items);
-        gameUI.addAllergy(allergyAdded);
+        // Suction is turned off while the vacuum is about to sneeze or sneezing.
+        int allergyAdded = 0;
+
+        if (!sneeze.isActive()) {
+            allergyAdded = vacuum.suction(items);
+            gameUI.addAllergy(allergyAdded);
+        }
 
         if (allergyAdded > 0) {
             audio.playCollect();
@@ -179,7 +184,8 @@ public class Main implements ApplicationListener {
         gameUI.update(delta);
 
         // Check whether the player wins or loses.
-        if (gameUI.isLevelComplete()) {
+        // A full allergy meter means a sneeze is coming, so the player can't win then.
+        if (!sneeze.isActive() && gameUI.isLevelComplete()) {
             gameState = GameState.WON;
             audio.playWin();
         } else if (gameUI.isGameOver()) {

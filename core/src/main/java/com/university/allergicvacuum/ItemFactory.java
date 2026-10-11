@@ -31,17 +31,25 @@ public final class ItemFactory {
     private static int scoreFor(ItemType type) {
         switch (type) {
             case PAPER:
+            case EGG:
                 return 10;
             case CLOTH:
+            case SWEATER:
+            case BOX:
                 return 15;
             case BAG:
+            case OIL:
                 return 20;
             case BOOK:
                 return 25;
             case PLASTIC_BAG:
+            case BOTTLE:
                 return 30;
             case CAN:
+            case PAN:
                 return 35;
+            case FRIDGE:
+                return 40;
             default:
                 // Toys
                 return 30;
@@ -50,10 +58,15 @@ public final class ItemFactory {
 
     /** The vacuum is allergic to plastic and metal. */
     private static int allergyFor(ItemType type) {
-        if (type == ItemType.PLASTIC_BAG || type == ItemType.CAN) {
-            return HIGH_ALLERGY;
+        switch (type) {
+            case PLASTIC_BAG:
+            case BOTTLE:
+            case CAN:
+            case PAN:
+            case FRIDGE:
+                return HIGH_ALLERGY;
+            default:
+                return LOW_ALLERGY;
         }
-
-        return LOW_ALLERGY;
     }
 }

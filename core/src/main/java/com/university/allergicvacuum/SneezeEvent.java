@@ -71,6 +71,11 @@ public class SneezeEvent {
         return false;
     }
 
+    /** Returns true from the start of the warning until the sneeze ends. */
+    public boolean isActive() {
+        return phase != Phase.IDLE;
+    }
+
     /** Returns true while the vacuum is shaking. */
     public boolean isWarning() {
         return phase == Phase.WARNING;
