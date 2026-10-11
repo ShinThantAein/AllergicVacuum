@@ -1,4 +1,3 @@
-
 package com.university.allergicvacuum;
 
 import com.badlogic.gdx.ApplicationListener;
@@ -8,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main implements ApplicationListener {
@@ -22,6 +21,9 @@ public class Main implements ApplicationListener {
     private GameUI gameUI;
     private SneezeEvent sneeze;
     private GameAudio audio;
+
+    // Items and the vacuum, in drawing order (vacuum last, so it is on top)
+    private final List<GameObject> gameObjects = new ArrayList<>();
 
     private enum GameState {
         PLAYING,
@@ -80,6 +82,10 @@ public class Main implements ApplicationListener {
         );
 
         currentLevel.loadBackground();
+
+        gameObjects.clear();
+        gameObjects.addAll(currentLevel.getItems());
+        gameObjects.add(vacuum);
     }
 
     private Rectangle areaAroundVacuum(float x, float y) {
@@ -106,11 +112,10 @@ public class Main implements ApplicationListener {
 
         currentLevel.renderBackground(batch);
 
-        for (Item item : currentLevel.getItems()) {
-            item.render(batch);
+        for (GameObject object : gameObjects) {
+            object.render(batch);
         }
 
-        vacuum.render(batch);
         sneeze.render(batch, vacuum);
         gameUI.render(batch);
 
@@ -123,13 +128,13 @@ public class Main implements ApplicationListener {
     }
 
     private void updateGame(float delta) {
-        vacuum.update(delta);
+        // Each object updates in its own way: the vacuum moves with the
+        // keyboard, items fly to new spots after a sneeze.
+        for (GameObject object : gameObjects) {
+            object.update(delta);
+        }
 
         List<Item> items = currentLevel.getItems();
-
-        for (Item item : items) {
-            item.update(delta);
-        }
 
         // Collect items and increase the allergy meter.
         int allergyAdded = vacuum.suction(items);
@@ -338,7 +343,7 @@ public class Main implements ApplicationListener {
     }
 
     private void resetRound() {
-        vacuum.getPosition().set(
+        vacuum.setPosition(
             VACUUM_START_X,
             VACUUM_START_Y
         );

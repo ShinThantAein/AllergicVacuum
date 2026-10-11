@@ -11,18 +11,13 @@ import com.badlogic.gdx.Gdx;
 
 public class Level {
 
-    // Width and height of the box each item is drawn in
-    private static final float ITEM_SIZE = 62f;
+    private static final float ITEM_SIZE = ItemFactory.ITEM_SIZE;
 
     // Floor area of the room background, as fractions of the screen size
     private static final float FLOOR_LEFT = 0.18f;
     private static final float FLOOR_RIGHT = 0.86f;
     private static final float FLOOR_BOTTOM = 0.14f;
     private static final float FLOOR_TOP = 0.74f;
-
-    // Allergy added by plastic and metal items, and by everything else
-    private static final int HIGH_ALLERGY = 15;
-    private static final int LOW_ALLERGY = 5;
 
     // Minimum empty space kept between scattered items
     private static final float ITEM_SPACING = 20f;
@@ -39,6 +34,10 @@ public class Level {
 
     // Items in this room
     private final List<Item> items;
+
+    // Read-only view of items, so other classes can't add or remove items
+    private final List<Item> readOnlyItems;
+
     private Texture background;
 
     // Constructor
@@ -68,6 +67,7 @@ public class Level {
         }
 
         this.items = new ArrayList<>();
+        this.readOnlyItems = Collections.unmodifiableList(items);
     }
 
     public void loadBackground() {
@@ -121,81 +121,46 @@ public class Level {
 
             case 1:
                 // Living Room: 175 score, 60 allergy in total
-                addItems("Paper", 2);
-                addItems("Plastic Bag", 1);
-                addItems("Can", 1);
-                addItems("Toy", 1);
-                addItems("Bag", 1);
-                addItems("Book", 1);
-                addItems("Cloth", 1);
+                addItems(ItemType.PAPER, 2);
+                addItems(ItemType.PLASTIC_BAG, 1);
+                addItems(ItemType.CAN, 1);
+                addItems(ItemType.TOY1, 1);
+                addItems(ItemType.BAG, 1);
+                addItems(ItemType.BOOK, 1);
+                addItems(ItemType.CLOTH, 1);
                 break;
+
             case 2:
                 // Bedroom: 270 score, 95 allergy in total
-                addItems("Cloth", 1);
-                addItems("Book", 1);
-                addItems("Paper", 2);
-                addItems("Toy1", 1);
-                addItems("Toy2", 1);
-                addItems("Plastic Bag", 2);
-                addItems("Bag", 1);
-                addItems("Can", 2);
+                addItems(ItemType.CLOTH, 1);
+                addItems(ItemType.BOOK, 1);
+                addItems(ItemType.PAPER, 2);
+                addItems(ItemType.TOY1, 1);
+                addItems(ItemType.TOY2, 1);
+                addItems(ItemType.PLASTIC_BAG, 2);
+                addItems(ItemType.BAG, 1);
+                addItems(ItemType.CAN, 2);
                 break;
+
             default:
                 // Level 3, Kitchen: 290 score, 110 allergy in total
-                addItems("Can", 3);
-                addItems("Plastic Bag", 2);
-                addItems("Paper", 2);
-                addItems("Bag", 1);
-                addItems("Toy3", 1);
-                addItems("Book", 1);
-                addItems("Cloth", 2);
+                addItems(ItemType.CAN, 3);
+                addItems(ItemType.PLASTIC_BAG, 2);
+                addItems(ItemType.PAPER, 2);
+                addItems(ItemType.BAG, 1);
+                addItems(ItemType.TOY3, 1);
+                addItems(ItemType.BOOK, 1);
+                addItems(ItemType.CLOTH, 2);
                 break;
         }
 
         scatterItems(items, keepClear, false);
     }
 
-    /**
-     * Adds items of one type. Every item of the same type has the same
-     * score and allergy, so players can learn which items are risky.
-     */
-    private void addItems(String type, int count) {
-        int score;
-
-        switch (type) {
-            case "Paper":
-                score = 10;
-                break;
-            case "Cloth":
-                score = 15;
-                break;
-            case "Bag":
-                score = 20;
-                break;
-            case "Book":
-                score = 25;
-                break;
-            case "Plastic Bag":
-                score = 30;
-                break;
-            case "Can":
-                score = 35;
-                break;
-            default:
-                // Toys
-                score = 30;
-                break;
-        }
-
-        // The vacuum is allergic to plastic and metal
-        boolean plasticOrMetal = type.equals("Plastic Bag") || type.equals("Can");
-        int allergyValue = plasticOrMetal ? HIGH_ALLERGY : LOW_ALLERGY;
-
+    /** Adds items of one type, created by ItemFactory. */
+    private void addItems(ItemType type, int count) {
         for (int i = 0; i < count; i++) {
-            items.add(new Item(
-                0, 0, ITEM_SIZE, ITEM_SIZE,
-                type, score, allergyValue
-            ));
+            items.add(ItemFactory.createItem(type));
         }
     }
 
@@ -211,9 +176,9 @@ public class Level {
         for (Item item : items) {
             if (item.isCollected()) {
                 item.reset();
-                item.getPosition().set(
-                    fromX - ITEM_SIZE / 2f,
-                    fromY - ITEM_SIZE / 2f
+                item.setPosition(
+                    fromX - item.getWidth() / 2f,
+                    fromY - item.getHeight() / 2f
                 );
             }
         }
@@ -250,6 +215,7 @@ public class Level {
         float cellHeight = floorHeight / rows;
 
         List<Rectangle> cells = new ArrayList<>();
+
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < columns; column++) {
                 cells.add(new Rectangle(
@@ -285,7 +251,7 @@ public class Level {
             if (animate) {
                 item.flyTo(spot.x, spot.y);
             } else {
-                item.getPosition().set(spot.x, spot.y);
+                item.setPosition(spot.x, spot.y);
             }
         }
     }
@@ -316,9 +282,9 @@ public class Level {
         return false;
     }
 
-    // Get all items in this level
+    // Get all items in this level (read-only list)
     public List<Item> getItems() {
-        return items;
+        return readOnlyItems;
     }
 
     // Get level number

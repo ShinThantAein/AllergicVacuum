@@ -6,17 +6,11 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
 
 import java.util.List;
 
-public class Vacuum {
-
-    // Vacuum properties
-    private final Vector2 position;
-
-    private final float width;
-    private final float height;
+/** The vacuum cleaner controlled by the player. */
+public class Vacuum extends GameObject {
 
     private float speed;
 
@@ -36,10 +30,7 @@ public class Vacuum {
     // Constructor
     public Vacuum(float x, float y, float width, float height, float speed) {
 
-        this.position = new Vector2(x, y);
-
-        this.width = width;
-        this.height = height;
+        super(x, y, width, height);
 
         this.speed = speed;
 
@@ -62,6 +53,7 @@ public class Vacuum {
 
 
     // Update
+    @Override
     public void update(float delta) {
 
         move(delta);
@@ -106,8 +98,7 @@ public class Vacuum {
             movementY -= speed * delta;
         }
 
-        position.x += movementX;
-        position.y += movementY;
+        setPosition(getX() + movementX, getY() + movementY);
 
         keepOnScreen();
 
@@ -121,16 +112,9 @@ public class Vacuum {
 
     /** Stops the vacuum from leaving the window. */
     private void keepOnScreen() {
-        position.x = MathUtils.clamp(
-            position.x,
-            0f,
-            Gdx.graphics.getWidth() - width
-        );
-
-        position.y = MathUtils.clamp(
-            position.y,
-            0f,
-            Gdx.graphics.getHeight() - height
+        setPosition(
+            MathUtils.clamp(getX(), 0f, Gdx.graphics.getWidth() - getWidth()),
+            MathUtils.clamp(getY(), 0f, Gdx.graphics.getHeight() - getHeight())
         );
     }
 
@@ -139,10 +123,7 @@ public class Vacuum {
     /**Updates the position of the suction area,nso that it follows the vacuum.*/
     private void updateSuctionArea() {
 
-        suctionArea.setPosition(
-            position.x + width / 2f,
-            position.y + height / 2f
-        );
+        suctionArea.setPosition(getCenterX(), getCenterY());
     }
 
 
@@ -186,16 +167,8 @@ public class Vacuum {
     // =========================
 
     /** Draws the vacuum on the screen */
+    @Override
     public void render(SpriteBatch batch) {
-        // Fit the image inside the vacuum box without stretching it
-        float scale = Math.min(
-            width / texture.getWidth(),
-            height / texture.getHeight()
-        );
-
-        float drawWidth = texture.getWidth() * scale;
-        float drawHeight = texture.getHeight() * scale;
-
         // Jitter the image while a sneeze is coming
         float shakeX = 0f;
         float shakeY = 0f;
@@ -207,52 +180,10 @@ public class Vacuum {
             shakeRotation = MathUtils.random(-SHAKE_ANGLE, SHAKE_ANGLE);
         }
 
-        batch.draw(
-            texture,
-            position.x + (width - drawWidth) / 2f + shakeX,
-            position.y + (height - drawHeight) / 2f + shakeY,
-            drawWidth / 2f,
-            drawHeight / 2f,
-            drawWidth,
-            drawHeight,
-            1f,
-            1f,
-            rotation + shakeRotation,
-            0,
-            0,
-            texture.getWidth(),
-            texture.getHeight(),
-            false,
-            false
-        );
+        drawFitted(batch, texture, shakeX, shakeY, rotation + shakeRotation);
     }
 
     // Getters
-    public Vector2 getPosition() {
-        return position;
-    }
-
-
-    public float getX() {
-        return position.x;
-    }
-
-
-    public float getY() {
-        return position.y;
-    }
-
-
-    public float getWidth() {
-        return width;
-    }
-
-
-    public float getHeight() {
-        return height;
-    }
-
-
     public float getSpeed() {
         return speed;
     }
@@ -260,11 +191,6 @@ public class Vacuum {
 
     public void setSpeed(float speed) {
         this.speed = speed;
-    }
-
-
-    public Circle getSuctionArea() {
-        return suctionArea;
     }
 
 
@@ -281,6 +207,7 @@ public class Vacuum {
      * Releases the texture when the vacuum
      * is no longer needed.
      */
+    @Override
     public void dispose() {
 
         texture.dispose();
