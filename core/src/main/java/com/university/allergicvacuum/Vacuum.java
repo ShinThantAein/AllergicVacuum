@@ -5,17 +5,12 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Circle;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.MathUtils;
 
 import java.util.List;
 
-public class Vacuum {
-
-    // Vacuum properties
-    private final Vector2 position;
-
-    private final float width;
-    private final float height;
+/** The vacuum cleaner controlled by the player. */
+public class Vacuum extends GameObject {
 
     private float speed;
 
@@ -27,18 +22,20 @@ public class Vacuum {
 
     private float rotation = 0f;
 
+    // Shaking before a sneeze
+    private static final float SHAKE_DISTANCE = 4f;
+    private static final float SHAKE_ANGLE = 8f;
+    private boolean shaking = false;
+
     // Constructor
     public Vacuum(float x, float y, float width, float height, float speed) {
 
-        this.position = new Vector2(x, y);
-
-        this.width = width;
-        this.height = height;
+        super(x, y, width, height);
 
         this.speed = speed;
 
         // Suction radius
-        float suctionRadius = width * 0.6f;
+        float suctionRadius = width * 0.32f;
 
         this.suctionArea = new Circle(
             x + width / 2f,
@@ -46,12 +43,17 @@ public class Vacuum {
             suctionRadius
         );
 
-        // Temporary vacuum image
-        this.texture = new Texture("vacuum.jpg");
+        // Top-down vacuum image, facing right at rotation 0
+        this.texture = new Texture(Gdx.files.internal("sprites/vacuum.png"), true);
+        this.texture.setFilter(
+            Texture.TextureFilter.MipMapLinearLinear,
+            Texture.TextureFilter.Linear
+        );
     }
 
 
     // Update
+    @Override
     public void update(float delta) {
 
         move(delta);
@@ -96,8 +98,9 @@ public class Vacuum {
             movementY -= speed * delta;
         }
 
-        position.x += movementX;
-        position.y += movementY;
+        setPosition(getX() + movementX, getY() + movementY);
+
+        keepOnScreen();
 
         if (movementX != 0 || movementY != 0) {
             rotation = (float) Math.toDegrees(
@@ -107,14 +110,20 @@ public class Vacuum {
     }
 
 
+    /** Stops the vacuum from leaving the window. */
+    private void keepOnScreen() {
+        setPosition(
+            MathUtils.clamp(getX(), 0f, Gdx.graphics.getWidth() - getWidth()),
+            MathUtils.clamp(getY(), 0f, Gdx.graphics.getHeight() - getHeight())
+        );
+    }
+
+
     // Suction
     /**Updates the position of the suction area,nso that it follows the vacuum.*/
     private void updateSuctionArea() {
 
-        suctionArea.setPosition(
-            position.x + width / 2f,
-            position.y + height / 2f
-        );
+        suctionArea.setPosition(getCenterX(), getCenterY());
     }
 
 
@@ -128,7 +137,7 @@ public class Vacuum {
         int allergyAdded = 0;
 
         for (Item item : items) {
-            if (item == null || item.isCollected()) {
+            if (item == null || item.isCollected() || item.isFlying()) {
                 continue;
             }
 
@@ -140,8 +149,6 @@ public class Vacuum {
 
         return allergyAdded;
     }
-
-
     /**
      * Checks whether an item is inside
      * the vacuum's suction area.
@@ -155,73 +162,28 @@ public class Vacuum {
     }
 
 
-    /**
-     * Collects an item.
-     *
-     * The Vacuum only tells the Item that it
-     * has been collected.
-     *
-     * Score and allergy handling should be
-     * managed by the appropriate systems.
-     */
-    private void collect(Item item) {
-
-        item.collect();
-    }
-
-
     // =========================
     // Drawing
     // =========================
 
     /** Draws the vacuum on the screen */
+    @Override
     public void render(SpriteBatch batch) {
-        batch.draw(
-            texture,
-            position.x,
-            position.y,
-            width / 2f,
-            height / 2f,
-            width,
-            height,
-            1f,
-            1f,
-            rotation,
-            0,
-            0,
-            texture.getWidth(),
-            texture.getHeight(),
-            false,
-            false
-        );
+        // Jitter the image while a sneeze is coming
+        float shakeX = 0f;
+        float shakeY = 0f;
+        float shakeRotation = 0f;
+
+        if (shaking) {
+            shakeX = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeY = MathUtils.random(-SHAKE_DISTANCE, SHAKE_DISTANCE);
+            shakeRotation = MathUtils.random(-SHAKE_ANGLE, SHAKE_ANGLE);
+        }
+
+        drawFitted(batch, texture, shakeX, shakeY, rotation + shakeRotation);
     }
 
     // Getters
-    public Vector2 getPosition() {
-        return position;
-    }
-
-
-    public float getX() {
-        return position.x;
-    }
-
-
-    public float getY() {
-        return position.y;
-    }
-
-
-    public float getWidth() {
-        return width;
-    }
-
-
-    public float getHeight() {
-        return height;
-    }
-
-
     public float getSpeed() {
         return speed;
     }
@@ -232,8 +194,8 @@ public class Vacuum {
     }
 
 
-    public Circle getSuctionArea() {
-        return suctionArea;
+    public void setShaking(boolean shaking) {
+        this.shaking = shaking;
     }
 
 
@@ -245,9 +207,9 @@ public class Vacuum {
      * Releases the texture when the vacuum
      * is no longer needed.
      */
+    @Override
     public void dispose() {
 
         texture.dispose();
     }
 }
-

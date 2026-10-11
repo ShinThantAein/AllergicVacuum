@@ -1,18 +1,23 @@
 package com.university.allergicvacuum;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Vector2;
 
-public class Item {
+import java.util.HashMap;
+import java.util.Map;
 
-    // Item position and size
-    private final Vector2 position;
-    private final float width;
-    private final float height;
+/** An item on the floor that the vacuum can collect. Create items with ItemFactory. */
+public class Item extends GameObject {
+
+    // Textures shared by all items, with how many items use each one
+    private static final Map<String, Texture> sharedTextures = new HashMap<>();
+    private static final Map<String, Integer> textureUsers = new HashMap<>();
 
     // Item information
-    private final String type;
+    private final ItemType type;
     private final int score;
     private final int allergyValue;
 
@@ -22,14 +27,19 @@ public class Item {
     // Checks if the item has been collected
     private boolean collected;
 
+    // Flight to a new spot after the vacuum sneezes
+    private static final float FLIGHT_DURATION = 0.7f;
+    private final Vector2 flightStart = new Vector2();
+    private final Vector2 flightEnd = new Vector2();
+    private float flightElapsed;
+    private boolean flying;
+    private float rotation;
+
     // Constructor
     public Item(float x, float y, float width, float height,
-                String type, int score, int allergyValue) {
+                ItemType type, int score, int allergyValue) {
 
-        this.position = new Vector2(x, y);
-
-        this.width = width;
-        this.height = height;
+        super(x, y, width, height);
 
         this.type = type;
         this.score = score;
@@ -37,41 +47,49 @@ public class Item {
 
         this.collected = false;
 
+        this.texture = acquireTexture(type.getTextureFile());
+    }
 
-        // Choose the correct image
-        if (type.equals("Paper")) {
 
-            texture = new Texture("paper.jpg");
+    // =========================
+    // Textures
+    // =========================
 
-        } else if (type.equals("Plastic Bag")) {
+    private static Texture acquireTexture(String file) {
 
-            texture = new Texture("plasticbag.jpg");
+        Texture shared = sharedTextures.get(file);
 
-        } else if (type.equals("Can")) {
-
-            texture = new Texture("can.jpg");
-
-        } else if (type.equals("Toy")) {
-
-            texture = new Texture("toy1.jpg");
-
-        } else if (type.equals("Toy1")) {
-
-            texture = new Texture("toy1.jpg");
-
-        } else if (type.equals("Toy2")) {
-
-            texture = new Texture("toy2.jpg");
-
-        } else if (type.equals("Toy3")) {
-
-            texture = new Texture("toy3.jpg");
-
-        } else {
-
-            // Default image
-            texture = new Texture("paper.jpg");
+        if (shared == null) {
+            // Mipmaps keep the image smooth when drawn smaller than its file size
+            shared = new Texture(Gdx.files.internal(file), true);
+            shared.setFilter(
+                Texture.TextureFilter.MipMapLinearLinear,
+                Texture.TextureFilter.Linear
+            );
+            sharedTextures.put(file, shared);
+            textureUsers.put(file, 0);
         }
+
+        textureUsers.put(file, textureUsers.get(file) + 1);
+        return shared;
+    }
+
+
+    private static void releaseTexture(String file) {
+
+        Integer users = textureUsers.get(file);
+
+        if (users == null) {
+            return;
+        }
+
+        if (users > 1) {
+            textureUsers.put(file, users - 1);
+            return;
+        }
+
+        sharedTextures.remove(file).dispose();
+        textureUsers.remove(file);
     }
 
 
@@ -79,18 +97,58 @@ public class Item {
     // Draw Item
     // =========================
 
+    @Override
     public void render(SpriteBatch batch) {
 
         if (!collected) {
-
-            batch.draw(
-                texture,
-                position.x,
-                position.y,
-                width,
-                height
-            );
+            drawFitted(batch, texture, 0f, 0f, rotation);
         }
+    }
+
+
+    // =========================
+    // Flight
+    // =========================
+
+    /** Starts flying from the current position to (x, y). */
+    public void flyTo(float x, float y) {
+
+        flightStart.set(getPosition());
+        flightEnd.set(x, y);
+        flightElapsed = 0f;
+        flying = true;
+    }
+
+
+    @Override
+    public void update(float delta) {
+
+        if (!flying) {
+            return;
+        }
+
+        flightElapsed += delta;
+        float progress = Math.min(1f, flightElapsed / FLIGHT_DURATION);
+
+        getPosition().set(flightStart).lerp(
+            flightEnd,
+            Interpolation.pow2Out.apply(progress)
+        );
+
+        // One full spin while flying
+        rotation = 360f * progress;
+
+        if (progress >= 1f) {
+            flying = false;
+            rotation = 0f;
+        }
+    }
+
+
+    /** Items can't be collected while they are flying. */
+    public boolean isFlying() {
+
+        return flying;
     }
 
 
@@ -111,60 +169,10 @@ public class Item {
 
 
     // =========================
-    // Position
-    // =========================
-
-    public float getCenterX() {
-
-        return position.x + width / 2f;
-    }
-
-
-    public float getCenterY() {
-
-        return position.y + height / 2f;
-    }
-
-
-    public Vector2 getPosition() {
-
-        return position;
-    }
-
-
-    public float getX() {
-
-        return position.x;
-    }
-
-
-    public float getY() {
-
-        return position.y;
-    }
-
-
-    // =========================
-    // Size
-    // =========================
-
-    public float getWidth() {
-
-        return width;
-    }
-
-
-    public float getHeight() {
-
-        return height;
-    }
-
-
-    // =========================
     // Item Information
     // =========================
 
-    public String getType() {
+    public ItemType getType() {
 
         return type;
     }
@@ -183,14 +191,17 @@ public class Item {
 
     public void reset() {
         collected = false;
+        flying = false;
+        rotation = 0f;
     }
 
     // =========================
     // Dispose
     // =========================
 
+    @Override
     public void dispose() {
 
-        texture.dispose();
+        releaseTexture(type.getTextureFile());
     }
 }
