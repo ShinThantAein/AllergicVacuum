@@ -55,13 +55,9 @@ public class Vacuum extends GameObject {
     // Update
     @Override
     public void update(float delta) {
-
         move(delta);
-
         updateSuctionArea();
     }
-
-
 
     // Movement
     /*** Controls the vacuum using WASD or arrow keys. */
@@ -126,13 +122,6 @@ public class Vacuum extends GameObject {
         suctionArea.setPosition(getCenterX(), getCenterY());
     }
 
-
-    /**
-     * Checks all items and collects the items
-     * inside the suction area.
-     *
-     * @param items list of items currently in the room
-     */
     public int suction(List<Item> items) {
         int allergyAdded = 0;
 
@@ -203,10 +192,6 @@ public class Vacuum extends GameObject {
     // Dispose
     // =========================
 
-    /**
-     * Releases the texture when the vacuum
-     * is no longer needed.
-     */
     @Override
     public void dispose() {
 

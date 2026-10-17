@@ -4,10 +4,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 
-/**
- * Parent class of everything in the room that has a position and size,
- * and is updated and drawn every frame (the vacuum and the items).
- */
 public abstract class GameObject {
 
     // Bottom-left corner of the object
@@ -39,14 +35,6 @@ public abstract class GameObject {
     // =========================
     // Drawing
     // =========================
-
-    /**
-     * Draws the texture inside this object's box without stretching it.
-     *
-     * @param offsetX  extra horizontal shift, e.g. for shaking
-     * @param offsetY  extra vertical shift, e.g. for shaking
-     * @param rotation rotation in degrees around the centre of the image
-     */
     protected void drawFitted(SpriteBatch batch, Texture texture,
                               float offsetX, float offsetY, float rotation) {
 

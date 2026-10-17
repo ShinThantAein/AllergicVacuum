@@ -6,10 +6,6 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
-/**
- * Handles the vacuum's sneeze when its allergy meter is full.
- * The vacuum shakes before sneezing and scattering collected items.
- */
 public class SneezeEvent {
 
     private enum Phase {

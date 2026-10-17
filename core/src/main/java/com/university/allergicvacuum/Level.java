@@ -171,14 +171,6 @@ public class Level {
         }
     }
 
-    /**
-     * The vacuum sneezes: every collected item shoots back out of it,
-     * and all items fly to new random spots away from the vacuum.
-     *
-     * @param fromX     centre of the vacuum, where collected items come out
-     * @param fromY     centre of the vacuum, where collected items come out
-     * @param keepClear area around the vacuum where no item may land
-     */
     public void sneezeScatter(float fromX, float fromY, Rectangle keepClear) {
         for (Item item : items) {
             if (item.isCollected()) {
@@ -193,15 +185,6 @@ public class Level {
         scatterItems(items, keepClear, true);
     }
 
-    /**
-     * Moves the given items to random spots on the floor.
-     *
-     * The floor is split into a grid with at least one cell per item,
-     * and each item goes into a different random cell, so items are
-     * spread over the whole room instead of bunching up in one area.
-     *
-     * @param animate if true, items fly to their new spot instead of jumping
-     */
     private void scatterItems(List<Item> toPlace, Rectangle keepClear, boolean animate) {
         if (toPlace.isEmpty()) {
             return;
