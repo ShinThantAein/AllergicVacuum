@@ -1,12 +1,5 @@
 package com.university.allergicvacuum;
 
-/**
- * Factory pattern: creates items without the caller needing to know
- * each item's size, score or allergy.
- *
- * Every item of the same type gets the same score and allergy,
- * so players can learn which items are risky.
- */
 public final class ItemFactory {
 
     // Width and height of the box each item is drawn in
